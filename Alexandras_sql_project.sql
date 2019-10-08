@@ -90,21 +90,31 @@ different costs to members (the listed costs are per half-hour 'slot'), and
 the guest user's ID is always 0. Include in your output the name of the
 facility, the name of the member formatted as a single column, and the cost.
 Order by descending cost, and do not use any subqueries. */
-SELECT name, firstname, surname, slots*guestcost as gcost, slots*membercost as mcost
-FROM `Bookings` 
+SELECT name, firstname, surname, CASE WHEN memid = "0" THEN slots*guestcost ELSE slots*membercost END AS cost
+FROM `Bookings`
 JOIN `Facilities` USING (facid)
 JOIN `Members` USING (memid)
 WHERE starttime REGEXP '^2012-09-14'
-/* Don't know where to go from here because CASE keeps not working!!!*/
+HAVING cost > 30
+
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
-
+SELECT name, firstname, surname, cost 
+FROM (SELECT name, memid, starttime, CASE WHEN memid = "0" THEN slots*guestcost ELSE slots*membercost END AS cost FROM `Bookings` JOIN `Facilities` USING (facid) HAVING cost > 30) cost_query
+JOIN `Members` USING (memid)
+WHERE starttime REGEXP '^2012-09-14'
 
 /* Q10: Produce a list of facilities with a total revenue less than 1000.
 The output of facility name and total revenue, sorted by revenue. Remember
 that there's a different cost for guests and members! */
 
-
+SELECT Facilities.name AS Facility_Name,
+SUM(CASE WHEN Bookings.memid = 0 THEN Facilities.guestcost*Bookings.slots
+ELSE Facilities.membercost*Bookings.slots END) AS Revenue
+FROM `Facilities` JOIN `Bookings` USING (facid)
+GROUP BY Facilities.name
+HAVING Revenue < 1000
+ORDER BY Revenue DESC
 
 
 
